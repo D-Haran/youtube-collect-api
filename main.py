@@ -16,9 +16,6 @@ app = FastAPI()
 
 items = []
 
-PORT = int(os.get('PORT', 8000))
-HOST = '0.0.0.0'
-
 api_key=os.getenv("YOUTUBE_DATA_API_KEY")
 
 def get_video_data(video_id: str):
