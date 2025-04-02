@@ -80,10 +80,12 @@ def get_channel_subscribers(channel_id: str):
 def get_collect_ratio(video_id: str):
     video_data = get_video_data(video_id)
     channel_data = get_channel_data(video_data["items"][0]["snippet"]["channelId"])
-    print("This"+video_id)
-    print(channel_data.keys())
     videoViewCount = float(video_data["items"][0]["statistics"]["viewCount"])
+    if videoViewCount == 0:
+        videoViewCount = 1
     hoursSinceUpload = float(video_data["items"][0]["snippet"]["hoursSinceUpload"])
+    if hoursSinceUpload == 0:
+        hoursSinceUpload = 1
     if "likeCount" in video_data["items"][0]["statistics"]:
         videoLikeCount = float(video_data["items"][0]["statistics"]["likeCount"])
     else:
@@ -94,7 +96,11 @@ def get_collect_ratio(video_id: str):
         videoCommentCount = 1
     channelVideoCount = float(channel_data["items"][0]["statistics"]["videoCount"])
     channelViewCount = float(channel_data["items"][0]["statistics"]["viewCount"])
+    if channelViewCount == 0:
+        channelViewCount = 1
     channelSubCount = float(channel_data["items"][0]["statistics"]["subscriberCount"])
+    if channelSubCount == 0:
+        channelSubCount = 1
     print(hoursSinceUpload)
     v = channelViewCount / (2 * channelVideoCount)
     v_hat = v * min(1, channelVideoCount / 100)
@@ -119,6 +125,7 @@ def get_collect_ratio(video_id: str):
         base_price = raw_price*0.2
         rebound = 1 + math.log1p(days - 2)/2
         price = base_price * rebound
+        
     if price == 0:
         return [videoViewCount, channelSubCount, 0.9999]
     else:
