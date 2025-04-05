@@ -54,32 +54,7 @@ def get_channel_subscribers_from_id(channel_id: str):
     res = requests.request("GET", url, headers=headers, data=payload)
     return int(res.json()["items"][0]["statistics"]["subscriberCount"])
 
-@app.get("/")
-def root():
-    return {"Hello": "World"}
-
-@app.get("/get_video_metadata/{video_id}")
-def get_video_metadata(video_id):
-    video_data = get_video_data(video_id)["items"][0]
-    return video_data
-
-@app.get("/get_channel_metadata/{channel_id}")
-def get_channel_metadata(channel_id):
-    return get_channel_data(channel_id)["items"][0]
-
-
-@app.get("/video_viewcount/{video_id}")
-def get_video_viewcount(video_id: str):
-    return int(get_video_data(video_id)["items"][0]["statistics"]["viewCount"])
-
-@app.get("/channel_subscribers/{channel_id}")
-def get_channel_subscribers(channel_id: str):
-    return get_channel_subscribers_from_id(channel_id)
-
-@app.get("/collect_ratio/{video_id}")
-def get_collect_ratio(video_id: str):
-    video_data = get_video_data(video_id)
-    channel_data = get_channel_data(video_data["items"][0]["snippet"]["channelId"])
+def generate_collect_ratio(video_data, channel_data):
     videoViewCount = float(video_data["items"][0]["statistics"]["viewCount"])
     if videoViewCount == 0:
         videoViewCount = 1
@@ -130,5 +105,42 @@ def get_collect_ratio(video_id: str):
         return [videoViewCount, channelSubCount, 0.9999]
     else:
         return [videoViewCount, channelSubCount, price]
-
     
+@app.get("/")
+def root():
+    return {"Hello": "World"}
+
+@app.get("/get_video_metadata/{video_id}")
+def get_video_metadata(video_id):
+    video_data = get_video_data(video_id)["items"][0]
+    return video_data
+
+@app.get("/get_channel_metadata/{channel_id}")
+def get_channel_metadata(channel_id):
+    return get_channel_data(channel_id)["items"][0]
+
+
+@app.get("/video_viewcount/{video_id}")
+def get_video_viewcount(video_id: str):
+    return int(get_video_data(video_id)["items"][0]["statistics"]["viewCount"])
+
+@app.get("/channel_subscribers/{channel_id}")
+def get_channel_subscribers(channel_id: str):
+    return get_channel_subscribers_from_id(channel_id)
+
+@app.get("/collect_ratio/{video_id}")
+def get_collect_ratio(video_id: str):
+    video_data = get_video_data(video_id)
+    channel_data = get_channel_data(video_data["items"][0]["snippet"]["channelId"])
+    return generate_collect_ratio(video_data, channel_data)
+
+
+@app.get("/collect_ratio_and_video_metadata/{video_id}")
+def get_collect_ratio_and_video_metadata(video_id: str):
+    res = []
+    video_data = get_video_data(video_id)
+    channel_data = get_channel_data(video_data["items"][0]["snippet"]["channelId"])
+    collect_ratio = generate_collect_ratio(video_data, channel_data)
+    res.extend(collect_ratio)
+    res.append(video_data)
+    return res
