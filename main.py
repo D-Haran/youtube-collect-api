@@ -142,5 +142,5 @@ def get_collect_ratio_and_video_metadata(video_id: str):
     channel_data = get_channel_data(video_data["items"][0]["snippet"]["channelId"])
     collect_ratio = generate_collect_ratio(video_data, channel_data)
     res.extend(collect_ratio)
-    res.append(video_data)
+    res.append(video_data["items"][0])
     return res
