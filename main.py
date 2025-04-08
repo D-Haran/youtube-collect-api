@@ -102,9 +102,9 @@ def generate_collect_ratio(video_data, channel_data):
         price = base_price * rebound
         
     if price == 0:
-        return [videoViewCount, channelSubCount, 0.9999]
+        return [videoViewCount, channelSubCount, 0.9999, hoursSinceUpload]
     else:
-        return [videoViewCount, channelSubCount, price]
+        return [videoViewCount, channelSubCount, price, hoursSinceUpload]
     
 @app.get("/")
 def root():
