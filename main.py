@@ -92,7 +92,7 @@ def generate_collect_ratio(video_data, channel_data):
     decay_start = max(0, hoursSinceUpload - 1)
     time_decay = math.exp(-decay_start / half_life)
     if hoursSinceUpload < 48:
-        raw_price = ((videoViewCount ** 0.7) * (1 + E)) / (2 * S)
+        raw_price = ((videoViewCount ** 0.7) * (1 + E)) / (2 * math.log1p(S))
         price = K * raw_price * small_channel_boost * G_estimate * outperformance * anti_whale * time_decay
     else:
         days = hoursSinceUpload / 24
@@ -133,14 +133,3 @@ def get_collect_ratio(video_id: str):
     video_data = get_video_data(video_id)
     channel_data = get_channel_data(video_data["items"][0]["snippet"]["channelId"])
     return generate_collect_ratio(video_data, channel_data)
-
-
-@app.get("/collect_ratio_and_video_metadata/{video_id}")
-def get_collect_ratio_and_video_metadata(video_id: str):
-    res = []
-    video_data = get_video_data(video_id)
-    channel_data = get_channel_data(video_data["items"][0]["snippet"]["channelId"])
-    collect_ratio = generate_collect_ratio(video_data, channel_data)
-    res.extend(collect_ratio)
-    res.append(video_data["items"][0])
-    return res
