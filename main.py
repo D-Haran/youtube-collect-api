@@ -92,7 +92,7 @@ def generate_collect_ratio(video_data, channel_data):
     decay_start = max(0, hoursSinceUpload - 1)
     time_decay = math.exp(-decay_start / half_life)
     if hoursSinceUpload < 48:
-        raw_price = ((videoViewCount ** 0.7) * (1 + E)) / (2 * math.log1p(S))
+        raw_price = ((videoViewCount ** 0.7) * (1 + E)) / (2 * math.log(S))
         price = K * raw_price * small_channel_boost * G_estimate * outperformance * anti_whale * time_decay
     else:
         days = hoursSinceUpload / 24
