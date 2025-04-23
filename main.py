@@ -7,6 +7,18 @@ import numpy as np
 # from datetime import date
 import math
 from datetime import datetime, timezone
+import time
+import random
+
+def timeit(func):
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        end = time.perf_counter()
+        elapsed = end - start
+        print(f'{func}Time taken: {elapsed:.6f} seconds')
+        return result
+    return wrapper
 
 dotenv_path = find_dotenv()
 
@@ -18,8 +30,11 @@ items = []
 
 api_key=os.getenv("YOUTUBE_DATA_API_KEY")
 
+@timeit
 def get_video_data(video_id: str):
+    print(video_id)
     url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id={video_id}&key={api_key}"
+    print(url)
 
     payload = {}
     headers = {}
@@ -27,15 +42,20 @@ def get_video_data(video_id: str):
     res = requests.request("GET", url, headers=headers, data=payload)
     res = res.json()
     today = datetime.now(timezone.utc)
-    videoPublishDate_raw = ((res["items"][0]["snippet"]["publishedAt"]))
+    try:
+        videoPublishDate_raw = ((res["items"][0]["snippet"]["publishedAt"]))
 
-    videoPublishDate = datetime.strptime(videoPublishDate_raw, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        videoPublishDate = datetime.strptime(videoPublishDate_raw, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
 
-    difference = (today - videoPublishDate)
-    hours = difference.total_seconds() / 3600
-    res["items"][0]["snippet"]["hoursSinceUpload"] = hours
-    return res
+        difference = (today - videoPublishDate)
+        hours = difference.total_seconds() / 3600
+        res["items"][0]["snippet"]["hoursSinceUpload"] = hours
+        return res
+    except:
+        if res["pageInfo"]["totalResults"] == 0:
+            return "Video Not Found"
 
+@timeit
 def get_channel_data(channel_id: str):
     url = f"https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id={channel_id}&key={api_key}"
 
@@ -53,6 +73,7 @@ def get_channel_subscribers_from_id(channel_id: str):
 
     res = requests.request("GET", url, headers=headers, data=payload)
     return int(res.json()["items"][0]["statistics"]["subscriberCount"])
+
 
 def generate_collect_ratio(video_data, channel_data):
     videoViewCount = float(video_data["items"][0]["statistics"]["viewCount"])
@@ -100,7 +121,7 @@ def generate_collect_ratio(video_data, channel_data):
         base_price = raw_price*0.2
         rebound = 1 + math.log1p(days - 2)/2
         price = base_price * rebound
-        
+    
     if price == 0:
         return [videoViewCount, channelSubCount, 0.9999, hoursSinceUpload]
     else:
@@ -112,8 +133,13 @@ def root():
 
 @app.get("/get_video_metadata/{video_id}")
 def get_video_metadata(video_id):
-    video_data = get_video_data(video_id)["items"][0]
-    return video_data
+    video_data_function = get_video_data(video_id)
+    try:
+        video_data = video_data_function["items"][0]
+        return video_data
+    except:
+        if type(video_data_function) == str:
+            return {"error": "Not Found"}
 
 @app.get("/get_channel_metadata/{channel_id}")
 def get_channel_metadata(channel_id):
@@ -128,8 +154,11 @@ def get_video_viewcount(video_id: str):
 def get_channel_subscribers(channel_id: str):
     return get_channel_subscribers_from_id(channel_id)
 
+
 @app.get("/collect_ratio/{video_id}")
 def get_collect_ratio(video_id: str):
     video_data = get_video_data(video_id)
+    if type(video_data) == str:
+        return {'error': 'Not Found'}
     channel_data = get_channel_data(video_data["items"][0]["snippet"]["channelId"])
     return generate_collect_ratio(video_data, channel_data)
